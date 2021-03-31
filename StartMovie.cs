@@ -5,19 +5,14 @@ using UnityEngine;
 namespace StartMovie
 {
 
-	[KSPAddon(KSPAddon.Startup.EveryScene, false)]
+	[KSPAddon(KSPAddon.Startup.Instantly, true)]
 
 	public class StartMovie : MonoBehaviour
 	{
 
-		static string activeDirectory = Settings.ShotsDirectory;
-		static int counter;
 		static bool isRecording = false;
-
-		void Start()
-		{
-			Settings.Load();
-		}
+		static int counter;
+		static string activeDirectory = Settings.ShotsDirectory;
 
 		void Update()
 		{
@@ -27,21 +22,28 @@ namespace StartMovie
 				{
 					StartMovieGUI.Toggle();
 				} else {
-					isRecording = !isRecording;
-					if (isRecording)
+					if (Settings.IsEnabled)
 					{
-						counter = 0;
-						//Time.maximumDeltaTime = Settings.DeltaTimeLimit;
-						//Time.timeScale = 1f / Time.maximumDeltaTime / Settings.Framerate;
-						Time.captureFramerate = Settings.Framerate;
-						activeDirectory = Path.Combine(Settings.ShotsDirectory, String.Format("{0:yyMMdd-HHmmss}", DateTime.Now));
-						if (!Directory.Exists(activeDirectory)) Directory.CreateDirectory(activeDirectory);
-						Settings.Log("Recording…");
-					} else {
-						//Time.maximumDeltaTime = GameSettings.PHYSICS_FRAME_DT_LIMIT;
-						//Time.timeScale = 1f;
-						Time.captureFramerate = 0;
-						Settings.Log(String.Format("Stopped. Recorded {0} frames.", counter));
+						isRecording = !isRecording;
+						if (isRecording)
+						{
+							if (Settings.IsCaptureTimeMode)
+							{
+								Time.captureFramerate = Settings.Framerate;
+							} else {
+								Time.maximumDeltaTime = Settings.DeltaTimeLimit;
+								Time.timeScale = 1f / Time.maximumDeltaTime / Settings.Framerate;
+							}
+							counter = 0;
+							activeDirectory = Path.Combine(Settings.ShotsDirectory, DateTime.Now.ToString("yyMMdd-HHmmss"));
+							if (!Directory.Exists(activeDirectory)) Directory.CreateDirectory(activeDirectory);
+							Settings.Log("Recording…");
+						} else {
+							Time.captureFramerate = 0;
+							Time.maximumDeltaTime = GameSettings.PHYSICS_FRAME_DT_LIMIT;
+							Time.timeScale = 1f;
+							Settings.Log(String.Format("Stopped. Recorded {0} frames.", counter));
+						}
 					}
 				}
 			}
@@ -50,6 +52,12 @@ namespace StartMovie
 				ScreenCapture.CaptureScreenshot(Path.Combine(activeDirectory, String.Format("{0:00000}.png", counter)), Settings.SuperSize);
 				counter++;
 			}
+		}
+
+		void Awake()
+		{
+			DontDestroyOnLoad(gameObject);
+			Settings.Load();
 		}
 
 	}

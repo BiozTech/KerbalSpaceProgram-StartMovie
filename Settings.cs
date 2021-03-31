@@ -8,9 +8,13 @@ namespace StartMovie
 	public static class Settings
 	{
 
+		public static bool IsEnabled = false;
+		public static bool IsCaptureTimeMode = true;
+
 		public static KeyCode KeyRecord = KeyCode.F6;
 		public static int Framerate = 60;
 		public static int SuperSize = GameSettings.SCREENSHOT_SUPERSIZE;
+		public static float DeltaTimeLimit = GameSettings.PHYSICS_FRAME_DT_LIMIT; // 0.02 ~ 0.35 -> inf
 		public static string ShotsDirectoryDefault = Path.Combine(KSPUtil.ApplicationRootPath, "Screenshots");
 		public static string ShotsDirectory = ShotsDirectoryDefault;
 
@@ -20,11 +24,8 @@ namespace StartMovie
 		static string configTagKey = "Key";
 		static string configTagFramerate = "Framerate";
 		static string configTagSize = "SuperSize";
+		static string configTagDeltaTimeLimit = "DeltaTimeLimit";
 		static string configTagShotsDirectory = "ScreenshotsDirectory";
-
-		// optional
-	//	public static float DeltaTimeLimit = GameSettings.PHYSICS_FRAME_DT_LIMIT; // 0.02 ~ 0.35 -> inf
-	//	static string configTagDeltaTimeLimit = "DeltaTimeLimit";
 
 		public static void Load()
 		{
@@ -75,6 +76,15 @@ namespace StartMovie
 				}
 				isOk &= isOkCurrent;
 
+				isOkCurrent = configNode.HasValue(configTagDeltaTimeLimit);
+				if (isOkCurrent)
+				{
+					float dtLimit;
+					isOkCurrent = float.TryParse(configNode.GetValue(configTagDeltaTimeLimit).Replace(',', '.'), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture.NumberFormat, out dtLimit);
+					if (isOkCurrent) DeltaTimeLimit = dtLimit;
+				}
+				isOk &= isOkCurrent;
+
 				isOkCurrent = configNode.HasValue(configTagShotsDirectory);
 				if (isOkCurrent)
 				{
@@ -86,14 +96,6 @@ namespace StartMovie
 					}
 				}
 				isOk &= isOkCurrent;
-
-				// optional
-			//	if (configNode.HasValue(configTagDeltaTimeLimit))
-			//	{
-			//		float dtLimit;
-			//		isOkCurrent = float.TryParse(configNode.GetValue(configTagDeltaTimeLimit).Replace(',', '.'), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture.NumberFormat, out dtLimit);
-			//		if (isOkCurrent) DeltaTimeLimit = dtLimit;
-			//	}
 
 				if (!isOk)
 				{
@@ -118,8 +120,8 @@ namespace StartMovie
 			configNode.AddValue(configTagKey, KeyRecord, "Key to start recording (Alt+Key to open menu)");
 			configNode.AddValue(configTagFramerate, Framerate, "Target framerate");
 			configNode.AddValue(configTagSize, SuperSize, "SCREENSHOT_SUPERSIZE");
+			configNode.AddValue(configTagDeltaTimeLimit, DeltaTimeLimit, "Affects on physics accuracy");
 			configNode.AddValue(configTagShotsDirectory, ShotsDirectoryToOutput, "Folder the shots will be saved to");
-		//	configNode.AddValue(configTagDeltaTimeLimit, DeltaTimeLimit, "Affects on physics accuracy");
 			File.WriteAllText(settingsFileName, configNode.ToString(), System.Text.Encoding.Unicode); // non-latin letters? nah, never heard
 		}
 		static void BackupAndSave()
