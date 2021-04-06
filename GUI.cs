@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using UnityEngine;
+using KSP.UI.Screens;
 
 namespace StartMovie
 {
@@ -10,30 +11,22 @@ namespace StartMovie
 	public class StartMovieGUI : MonoBehaviour
 	{
 
-		static string strKeyRecord = Settings.KeyRecord.ToString();
-		static string strFramerate = Settings.Framerate.ToString();
-		static string strSuperSize = Settings.SuperSize.ToString();
-		static string strDeltaTime = Settings.DeltaTimeLimit.ToString();
-		static string strDirectory = Settings.ShotsDirectoryToOutput;
-		static bool isStrKeyRecordOk = true;
-		static bool isStrFramerateOk = true;
-		static bool isStrSuperSizeOk = true;
-		static bool isStrDeltaTimeOk = true;
-		static bool isStrDirectoryOk = true;
+		static string strKeyRecord, strFramerate, strSuperSize, strDeltaTime, strDirectory;
+		static bool isStrKeyRecordOk, isStrFramerateOk, isStrSuperSizeOk, isStrDeltaTimeOk, isStrDirectoryOk;
 
 		static bool isGUIVisible = false;
 		static bool isCaptureTimeMode = Settings.IsCaptureTimeMode;
 		static bool isDeltaTimeMode = !Settings.IsCaptureTimeMode;
 
-		static Rect windowPosition = new Rect(0.25f * Screen.width, 0.15f * Screen.height, 0, 0);
+		static Rect windowPosition = new Rect(0.25f * Screen.width + UnityEngine.Random.Range(-40f, 40f), 0.15f * Screen.height + UnityEngine.Random.Range(-40f, 40f), 0, 0);
 
 		void OnGUI()
 		{
 			if (isGUIVisible)
 			{
 				GUIStyle windowStyle = new GUIStyle(GUI.skin.window);
-				windowStyle.padding = new RectOffset(10, 15, 20, 10);
-				windowPosition = GUILayout.Window(0, windowPosition, OnWindow, "StartMovie Settings", windowStyle);
+				windowStyle.padding = new RectOffset(11, 15, 20, 11);
+				windowPosition = GUILayout.Window(("StartMovieGUI").GetHashCode(), windowPosition, OnWindow, "StartMovie Settings", windowStyle);
 			}
 		}
 
@@ -48,11 +41,11 @@ namespace StartMovie
 			GUIStyle toggleStyle = new GUIStyle(GUI.skin.toggle);
 			toggleStyle.margin = new RectOffset(4, 4, 4, 8);
 			GUIStyle buttonStyle = new GUIStyle(GUI.skin.button);
-			buttonStyle.margin = new RectOffset(4, 4, 12, 4);
+			buttonStyle.margin = new RectOffset(4, 4, 13, 4);
 
 			GUILayout.BeginVertical(GUILayout.Width(300f));
 
-			GUILayout.Space(5f);
+			GUILayout.Space(6f);
 			GUILayout.BeginHorizontal();
 			GUILayout.Label("Recording");
 			if (Settings.IsEnabled != GUILayout.Toggle(Settings.IsEnabled, Settings.IsEnabled ? " Enabled" : " Disabled", textFieldLayoutOptions)) // without " " it looks ugly >_>
@@ -64,19 +57,19 @@ namespace StartMovie
 
 			GUILayout.BeginHorizontal();
 			GUILayout.Label("Key");
-			ColorizeTextField(textFieldStyle, isStrKeyRecordOk);
+			ColorizeFieldIsWrong(textFieldStyle, isStrKeyRecordOk);
 			strKeyRecord = GUILayout.TextField(strKeyRecord, textFieldStyle, textFieldLayoutOptions);
 			GUILayout.EndHorizontal();
 
 			GUILayout.BeginHorizontal();
 			GUILayout.Label("Framerate");
-			ColorizeTextField(textFieldStyle, isStrFramerateOk);
+			ColorizeFieldIsWrong(textFieldStyle, isStrFramerateOk);
 			strFramerate = GUILayout.TextField(strFramerate, textFieldStyle, textFieldLayoutOptions);
 			GUILayout.EndHorizontal();
 
 			GUILayout.BeginHorizontal();
 			GUILayout.Label("SuperSize");
-			ColorizeTextField(textFieldStyle, isStrSuperSizeOk);
+			ColorizeFieldIsWrong(textFieldStyle, isStrSuperSizeOk);
 			strSuperSize = GUILayout.TextField(strSuperSize, textFieldStyle, textFieldLayoutOptions);
 			GUILayout.EndHorizontal();
 
@@ -103,13 +96,13 @@ namespace StartMovie
 			{
 				GUILayout.Box(strDeltaTime, boxStyle, textFieldLayoutOptions);
 			} else {
-				ColorizeTextField(textFieldStyle, isStrDeltaTimeOk);
+				ColorizeFieldIsWrong(textFieldStyle, isStrDeltaTimeOk);
 				strDeltaTime = GUILayout.TextField(strDeltaTime, textFieldStyle, textFieldLayoutOptions);
 			}
 			GUILayout.EndHorizontal();
 
 			GUILayout.Label("Screenshots directory");
-			ColorizeTextField(textFieldStyle, isStrDirectoryOk);
+			ColorizeFieldIsWrong(textFieldStyle, isStrDirectoryOk);
 			strDirectory = GUILayout.TextField(strDirectory, textFieldStyle);
 
 			GUILayout.BeginHorizontal();
@@ -168,12 +161,16 @@ namespace StartMovie
 
 		}
 
-		static void ColorizeTextField(GUIStyle style, bool isStrOk)
+		public static void ToggleByKey()
 		{
-			style.normal.textColor = style.focused.textColor = style.hover.textColor = (isStrOk) ? Color.white : Color.red;
+			if (StartMovieToolbarButton.IsButtonAdded)
+			{
+				if (isGUIVisible) StartMovieToolbarButton.Button.SetFalse(); else StartMovieToolbarButton.Button.SetTrue();
+			} else {
+				isGUIVisible = !isGUIVisible;
+			}
 		}
-
-		public static void Toggle()
+		public static void ToggleByButton()
 		{
 			isGUIVisible = !isGUIVisible;
 		}
@@ -184,17 +181,50 @@ namespace StartMovie
 			strFramerate = Settings.Framerate.ToString();
 			strSuperSize = Settings.SuperSize.ToString();
 			strDeltaTime = Settings.DeltaTimeLimit.ToString();
-			strDirectory = Settings.ShotsDirectoryToOutput;
-			isStrKeyRecordOk = true;
-			isStrFramerateOk = true;
-			isStrSuperSizeOk = true;
-			isStrDeltaTimeOk = true;
-			isStrDirectoryOk = true;
+			strDirectory = Settings.ShotsDirectoryToOutput();
+			isStrKeyRecordOk = isStrFramerateOk = isStrSuperSizeOk = isStrDeltaTimeOk = isStrDirectoryOk = true;
+		}
+
+		static void ColorizeFieldIsWrong(GUIStyle style, bool isOk)
+		{
+			style.normal.textColor = style.focused.textColor = style.hover.textColor = (isOk) ? Color.white : Color.red;
 		}
 
 		void Awake()
 		{
 			DontDestroyOnLoad(gameObject);
+			Initialize();
+		}
+
+	}
+
+	[KSPAddon(KSPAddon.Startup.EveryScene, false)]
+
+	public class StartMovieToolbarButton : MonoBehaviour
+	{
+
+		public static ApplicationLauncherButton Button;
+		public static bool IsButtonAdded = false;
+
+		void Start()
+		{
+
+			if (!IsButtonAdded && ApplicationLauncher.Instance != null)
+			{
+				var resources = new System.Resources.ResourceManager("StartMovie.Resources", typeof(StartMovieToolbarButton).Assembly);
+				Byte[] bytes = resources.GetObject("ToolbarIcon") as Byte[];
+				Texture2D buttonTexture = new Texture2D(38, 38, TextureFormat.ARGB32, false);
+				buttonTexture.LoadRawTextureData(bytes);
+				buttonTexture.Apply();
+				Button = ApplicationLauncher.Instance.AddModApplication(StartMovieGUI.ToggleByButton, StartMovieGUI.ToggleByButton, null, null, null, null, ApplicationLauncher.AppScenes.ALWAYS, buttonTexture);
+				IsButtonAdded = true;
+			}
+
+			// convert png to byte array
+		//	Texture2D pngToTexture = GameDatabase.Instance.GetTexture("StartMovie/Textures/ToolbarIcon", false);
+		//	Byte[] textureToBytes = pngToTexture.GetRawTextureData();
+		//	File.WriteAllBytes("ToolbarIcon.txt", textureToBytes);
+
 		}
 
 	}

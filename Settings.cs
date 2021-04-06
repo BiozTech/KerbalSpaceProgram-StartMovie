@@ -115,13 +115,13 @@ namespace StartMovie
 
 		public static void Save()
 		{
-			if (!Directory.Exists(pluginDataDir)) Directory.CreateDirectory(pluginDataDir);
 			ConfigNode configNode = new ConfigNode(configTagMain);
 			configNode.AddValue(configTagKey, KeyRecord, "Key to start recording (Alt+Key to open menu)");
 			configNode.AddValue(configTagFramerate, Framerate, "Target framerate");
 			configNode.AddValue(configTagSize, SuperSize, "SCREENSHOT_SUPERSIZE");
 			configNode.AddValue(configTagDeltaTimeLimit, DeltaTimeLimit, "Affects on physics accuracy");
-			configNode.AddValue(configTagShotsDirectory, ShotsDirectoryToOutput, "Folder the shots will be saved to");
+			configNode.AddValue(configTagShotsDirectory, ShotsDirectoryToOutput(), "Folder the shots will be saved to");
+			if (!Directory.Exists(pluginDataDir)) Directory.CreateDirectory(pluginDataDir);
 			File.WriteAllText(settingsFileName, configNode.ToString(), System.Text.Encoding.Unicode); // non-latin letters? nah, never heard
 		}
 		static void BackupAndSave()
@@ -132,21 +132,18 @@ namespace StartMovie
 			Save();
 		}
 
-		public static string ShotsDirectoryToOutput
+		public static string ShotsDirectoryToOutput()
 		{
-			get
-			{
-				return (ComparePaths(ShotsDirectory, ShotsDirectoryDefault)) ? string.Empty : ShotsDirectory;
-			}
+			return (ComparePaths(ShotsDirectory, ShotsDirectoryDefault) != 0) ? ShotsDirectory : string.Empty;
 		}
-		public static bool ComparePaths(string path1, string path2)
+		public static int ComparePaths(string path1, string path2)
 		{
-			return (String.Compare(Path.GetFullPath(path1).TrimEnd('\\'), Path.GetFullPath(path2).TrimEnd('\\'), StringComparison.InvariantCultureIgnoreCase) == 0);
+			return String.Compare(Path.GetFullPath(path1).TrimEnd('\\'), Path.GetFullPath(path2).TrimEnd('\\'), StringComparison.InvariantCultureIgnoreCase);
 		}
 
 		public static void Log(object message)
 		{
-			Debug.Log("<color=#ffcc33>StartMovie</color> » " + message);
+			Debug.Log("[StartMovie] " + message);
 		}
 
 	}

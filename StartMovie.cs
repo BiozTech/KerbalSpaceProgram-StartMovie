@@ -20,7 +20,7 @@ namespace StartMovie
 			{
 				if (Input.GetKey(KeyCode.LeftAlt) || Input.GetKey(KeyCode.RightAlt) || Input.GetKey(KeyCode.AltGr))
 				{
-					StartMovieGUI.Toggle();
+					StartMovieGUI.ToggleByKey();
 				} else {
 					if (Settings.IsEnabled)
 					{
@@ -30,9 +30,13 @@ namespace StartMovie
 							if (Settings.IsCaptureTimeMode)
 							{
 								Time.captureFramerate = Settings.Framerate;
+								Settings.Log("Starting in CaptureTime mode.");
+								Settings.Log(String.Format("Framerate = {0}.", Settings.Framerate));
 							} else {
 								Time.maximumDeltaTime = Settings.DeltaTimeLimit;
 								Time.timeScale = 1f / Time.maximumDeltaTime / Settings.Framerate;
+								Settings.Log("Starting in DeltaTime mode.");
+								Settings.Log(String.Format("Framerate = {0}, DeltaTimeLimit = {1}, TimeScale = {2:0.000}.", Settings.Framerate, Time.maximumDeltaTime, Time.timeScale));
 							}
 							counter = 0;
 							activeDirectory = Path.Combine(Settings.ShotsDirectory, DateTime.Now.ToString("yyMMdd-HHmmss"));
@@ -49,8 +53,7 @@ namespace StartMovie
 			}
 			if (isRecording)
 			{
-				ScreenCapture.CaptureScreenshot(Path.Combine(activeDirectory, String.Format("{0:00000}.png", counter)), Settings.SuperSize);
-				counter++;
+				ScreenCapture.CaptureScreenshot(Path.Combine(activeDirectory, String.Format("{0:00000}.png", counter++)), Settings.SuperSize);
 			}
 		}
 
