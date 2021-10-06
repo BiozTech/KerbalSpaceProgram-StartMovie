@@ -6,15 +6,13 @@ namespace StartMovie
 {
 
 	[KSPAddon(KSPAddon.Startup.Instantly, true)]
-
 	public class StartMovie : MonoBehaviour
 	{
 
-		static bool isRecording = false;
 		static int counter;
 		static string activeDirectory = Settings.ShotsDirectory;
 
-		void Update()
+		void LateUpdate()
 		{
 			if (Input.GetKeyDown(Settings.KeyRecord))
 			{
@@ -22,36 +20,36 @@ namespace StartMovie
 				{
 					StartMovieGUI.ToggleByKey();
 				} else {
-					if (Settings.IsEnabled)
+					if (Core.IsEnabled && !Core.IsReadingKeys)
 					{
-						isRecording = !isRecording;
-						if (isRecording)
+						Core.IsRecording = !Core.IsRecording;
+						if (Core.IsRecording)
 						{
-							if (Settings.IsCaptureTimeMode)
+							if (Core.IsCaptureTimeMode)
 							{
 								Time.captureFramerate = Settings.Framerate;
-								Settings.Log("Starting in CaptureTime mode.");
-								Settings.Log(String.Format("Framerate = {0}.", Settings.Framerate));
+								Core.Log("Starting in CaptureTime mode.");
+								Core.Log(String.Format("Framerate = {0}.", Settings.Framerate));
 							} else {
 								Time.maximumDeltaTime = Settings.DeltaTimeLimit;
 								Time.timeScale = 1f / Time.maximumDeltaTime / Settings.Framerate;
-								Settings.Log("Starting in DeltaTime mode.");
-								Settings.Log(String.Format("Framerate = {0}, DeltaTimeLimit = {1}, TimeScale = {2:0.000}.", Settings.Framerate, Time.maximumDeltaTime, Time.timeScale));
+								Core.Log("Starting in DeltaTime mode.");
+								Core.Log(String.Format("Framerate = {0}, DeltaTimeLimit = {1}, TimeScale = {2:0.000}.", Settings.Framerate, Time.maximumDeltaTime, Time.timeScale));
 							}
 							counter = 0;
 							activeDirectory = Path.Combine(Settings.ShotsDirectory, DateTime.Now.ToString("yyMMdd-HHmmss"));
 							if (!Directory.Exists(activeDirectory)) Directory.CreateDirectory(activeDirectory);
-							Settings.Log("Recording…");
+							Core.Log("Recording…");
 						} else {
 							Time.captureFramerate = 0;
 							Time.maximumDeltaTime = GameSettings.PHYSICS_FRAME_DT_LIMIT;
 							Time.timeScale = 1f;
-							Settings.Log(String.Format("Stopped. Recorded {0} frames.", counter));
+							Core.Log(String.Format("Stopped. Recorded {0} frames.", counter));
 						}
 					}
 				}
 			}
-			if (isRecording)
+			if (Core.IsRecording)
 			{
 				ScreenCapture.CaptureScreenshot(Path.Combine(activeDirectory, String.Format("{0:00000}.png", counter++)), Settings.SuperSize);
 			}
