@@ -12,18 +12,18 @@ namespace StartMovie
 
 		static string strKeyRecord, strFramerate, strSuperSize, strDeltaTime, strDirectory;
 		static bool isStrFramerateOk, isStrSuperSizeOk, isStrDeltaTimeOk, isStrDirectoryOk;
-		static bool isCaptureTimeMode = Core.IsCaptureTimeMode;
-		static bool isDeltaTimeMode = !Core.IsCaptureTimeMode;
+		static bool isCaptureTimeMode = Core.IsCaptureTimeMode, isDeltaTimeMode = !Core.IsCaptureTimeMode;
 
 		static bool wasGUIVisible = Core.IsGUIVisible;
 		static Rect windowPosition = new Rect(UnityEngine.Random.Range(0.23f, 0.27f) * Screen.width, UnityEngine.Random.Range(0.13f, 0.17f) * Screen.height, 0, 0);
+		static GUILayoutOption[] layoutTextField;
+		static GUIStyle styleTextField, styleBox, styleToggle, styleButtonSetKey, styleButtonApply;
 
 		void OnGUI()
 		{
 			if (Core.IsGUIVisible)
 			{
-				GUIStyle windowStyle = new GUIStyle(GUI.skin.window);
-				windowStyle.padding = new RectOffset(11, 15, 20, 11);
+				GUIStyle windowStyle = new GUIStyle(GUI.skin.window) { padding = new RectOffset(11, 15, 20, 11) };
 				windowPosition = GUILayout.Window(("StartMovieGUI").GetHashCode(), windowPosition, OnWindow, "StartMovie", windowStyle);
 			}
 		}
@@ -31,23 +31,20 @@ namespace StartMovie
 		void OnWindow(int windowId)
 		{
 
-			GUILayoutOption[] textFieldLayoutOptions = { GUILayout.Width(200f), GUILayout.Height(20f) };
-			GUIStyle textFieldStyle = new GUIStyle(GUI.skin.textField);
-			GUIStyle boxStyle = new GUIStyle(GUI.skin.box);
-			boxStyle.alignment = TextAnchor.MiddleLeft;
-			textFieldStyle.padding = boxStyle.padding = new RectOffset(4, 4, 3, 3);
-			GUIStyle toggleStyle = new GUIStyle(GUI.skin.toggle);
-			toggleStyle.margin = new RectOffset(4, 4, 4, 8);
-			GUIStyle buttonApplyStyle = new GUIStyle(GUI.skin.button);
-			buttonApplyStyle.margin = new RectOffset(90, 4, 13, 4);
+			layoutTextField = new[] { GUILayout.Width(200f), GUILayout.Height(20f) };
+			styleTextField = new GUIStyle(GUI.skin.textField) { padding = new RectOffset(4, 4, 3, 3) };
+			styleBox = new GUIStyle(GUI.skin.box) { padding = new RectOffset(4, 4, 3, 3), alignment = TextAnchor.MiddleLeft };
+			styleToggle = new GUIStyle(GUI.skin.toggle) { margin = new RectOffset(4, 4, 4, 8) };
+			styleButtonSetKey = new GUIStyle(GUI.skin.button);
+			styleButtonApply = new GUIStyle(GUI.skin.button) { margin = new RectOffset(90, 4, 13, 4) };
 
 			GUILayout.BeginVertical(GUILayout.Width(300f));
 
 			GUILayout.Space(6f);
 			GUILayout.BeginHorizontal();
 			GUILayout.Label("Recording");
-			ColorizeFieldIsEnabled(toggleStyle, !Core.IsRecording);
-			if (Core.IsEnabled != GUILayout.Toggle(Core.IsEnabled, Core.IsEnabled ? " Enabled" : " Disabled", toggleStyle, textFieldLayoutOptions)) // without " " it looks ugly >_>
+			ColorizeFieldIsEnabled(styleToggle, !Core.IsRecording);
+			if (Core.IsEnabled != GUILayout.Toggle(Core.IsEnabled, Core.IsEnabled ? " Enabled" : " Disabled", styleToggle, GUILayout.Width(196f))) // without " " it looks ugly >_>
 			{
 				if (!Core.IsRecording) Core.IsEnabled = !Core.IsEnabled;
 			}
@@ -56,12 +53,17 @@ namespace StartMovie
 
 			GUILayout.BeginHorizontal();
 			GUILayout.Label("Key");
-			ColorizeFieldIsWrong(boxStyle, !Core.IsReadingKeys);
-			GUILayout.Box(strKeyRecord, boxStyle, GUILayout.Width(125f), GUILayout.Height(20f));
+			ColorizeFieldIsWrong(styleBox, !Core.IsReadingKeys);
+			GUILayout.Box(strKeyRecord, styleBox, GUILayout.Width(125f), GUILayout.Height(20f));
 			GUILayout.Space(1f);
-			if (GUILayout.Button("Set", GUILayout.Width(70f), GUILayout.Height(20f)))
+			ColorizeFieldIsEnabled(styleButtonSetKey, !Core.IsRecording);
+			if (GUILayout.Button("Set", styleButtonSetKey, GUILayout.Width(70f), GUILayout.Height(20f)))
 			{
-				if (!Core.IsRecording) Core.IsReadingKeys = !Core.IsReadingKeys;
+				if (!Core.IsRecording)
+				{
+					Core.IsReadingKeys = !Core.IsReadingKeys;
+					Initialize();
+				}
 			}
 			if (Core.IsReadingKeys)
 			{
@@ -77,32 +79,32 @@ namespace StartMovie
 
 			GUILayout.BeginHorizontal();
 			GUILayout.Label("Framerate");
-			if (Core.IsRecording)
+			if (Core.IsRecording || Core.IsReadingKeys)
 			{
-				ColorizeFieldIsWrong(boxStyle, true);
-				GUILayout.Box(strFramerate, boxStyle, textFieldLayoutOptions);
+				ColorizeFieldIsWrong(styleBox, true);
+				GUILayout.Box(strFramerate, styleBox, layoutTextField);
 			} else {
-				ColorizeFieldIsWrong(textFieldStyle, isStrFramerateOk);
-				strFramerate = GUILayout.TextField(strFramerate, textFieldStyle, textFieldLayoutOptions);
+				ColorizeFieldIsWrong(styleTextField, isStrFramerateOk);
+				strFramerate = GUILayout.TextField(strFramerate, styleTextField, layoutTextField);
 			}
 			GUILayout.EndHorizontal();
 
 			GUILayout.BeginHorizontal();
 			GUILayout.Label("SuperSize");
-			if (Core.IsRecording)
+			if (Core.IsRecording || Core.IsReadingKeys)
 			{
-				ColorizeFieldIsWrong(boxStyle, true);
-				GUILayout.Box(strSuperSize, boxStyle, textFieldLayoutOptions);
+				ColorizeFieldIsWrong(styleBox, true);
+				GUILayout.Box(strSuperSize, styleBox, layoutTextField);
 			} else {
-				ColorizeFieldIsWrong(textFieldStyle, isStrSuperSizeOk);
-				strSuperSize = GUILayout.TextField(strSuperSize, textFieldStyle, textFieldLayoutOptions);
+				ColorizeFieldIsWrong(styleTextField, isStrSuperSizeOk);
+				strSuperSize = GUILayout.TextField(strSuperSize, styleTextField, layoutTextField);
 			}
 			GUILayout.EndHorizontal();
 
 			GUILayout.BeginHorizontal();
 			GUILayout.FlexibleSpace();
-			ColorizeFieldIsEnabled(toggleStyle, !Core.IsRecording);
-			if (isCaptureTimeMode != GUILayout.Toggle(isCaptureTimeMode, " CaptureTime mode", toggleStyle))
+			ColorizeFieldIsEnabled(styleToggle, !Core.IsRecording);
+			if (isCaptureTimeMode != GUILayout.Toggle(isCaptureTimeMode, " CaptureTime mode", styleToggle))
 			{
 				if (!Core.IsRecording)
 				{
@@ -112,7 +114,7 @@ namespace StartMovie
 				}
 			}
 			GUILayout.Space(10f);
-			if (isDeltaTimeMode != GUILayout.Toggle(isDeltaTimeMode, " DeltaTime mode", toggleStyle))
+			if (isDeltaTimeMode != GUILayout.Toggle(isDeltaTimeMode, " DeltaTime mode", styleToggle))
 			{
 				if (!Core.IsRecording)
 				{
@@ -125,29 +127,30 @@ namespace StartMovie
 
 			GUILayout.BeginHorizontal();
 			GUILayout.Label("DeltaTime");
-			if (Core.IsCaptureTimeMode || Core.IsRecording)
+			if (Core.IsCaptureTimeMode || Core.IsRecording || Core.IsReadingKeys)
 			{
-				ColorizeFieldIsWrong(boxStyle, true);
-				GUILayout.Box(strDeltaTime, boxStyle, textFieldLayoutOptions);
+				ColorizeFieldIsWrong(styleBox, true);
+				GUILayout.Box(strDeltaTime, styleBox, layoutTextField);
 			} else {
-				ColorizeFieldIsWrong(textFieldStyle, isStrDeltaTimeOk);
-				strDeltaTime = GUILayout.TextField(strDeltaTime, textFieldStyle, textFieldLayoutOptions);
+				ColorizeFieldIsWrong(styleTextField, isStrDeltaTimeOk);
+				strDeltaTime = GUILayout.TextField(strDeltaTime, styleTextField, layoutTextField);
 			}
 			GUILayout.EndHorizontal();
 
 			GUILayout.Label("Screenshots directory");
-			if (Core.IsRecording)
+			if (Core.IsRecording || Core.IsReadingKeys)
 			{
-				ColorizeFieldIsWrong(boxStyle, true);
-				GUILayout.Box(strDirectory, boxStyle);
+				ColorizeFieldIsWrong(styleBox, true);
+				GUILayout.Box(strDirectory, styleBox);
 			} else {
-				ColorizeFieldIsWrong(textFieldStyle, isStrDirectoryOk);
-				strDirectory = GUILayout.TextField(strDirectory, textFieldStyle);
+				ColorizeFieldIsWrong(styleTextField, isStrDirectoryOk);
+				strDirectory = GUILayout.TextField(strDirectory, styleTextField);
 			}
 
-			if (GUILayout.Button("Apply", buttonApplyStyle, GUILayout.Width(125f)))
+			ColorizeFieldIsEnabled(styleButtonApply, !Core.IsRecording && !Core.IsReadingKeys);
+			if (GUILayout.Button("Apply", styleButtonApply, GUILayout.Width(125f)))
 			{
-				ApplySettings();
+				if (!Core.IsRecording && !Core.IsReadingKeys) ApplySettings();
 			}
 
 			GUILayout.EndVertical();
@@ -158,51 +161,54 @@ namespace StartMovie
 
 		public static void ApplySettings()
 		{
-			if (!Core.IsRecording)
+			bool isOk = true;
+
+		//	KeyCode key;
+		//	isStrKeyRecordOk = Enum.TryParse(strKeyRecord, out key);
+		//	if (isStrKeyRecordOk) Settings.KeyRecord = key;
+		//	isOk &= isStrKeyRecordOk;
+
+			int fps;
+			isStrFramerateOk = Int32.TryParse(strFramerate, out fps);
+			if (isStrFramerateOk)
 			{
-
-				bool isOk = true;
-
-			//	KeyCode key;
-			//	isStrKeyRecordOk = Enum.TryParse(strKeyRecord, out key);
-			//	if (isStrKeyRecordOk) Settings.KeyRecord = key;
-			//	isOk &= isStrKeyRecordOk;
-
-				int fps;
-				isStrFramerateOk = Int32.TryParse(strFramerate, out fps);
-				if (isStrFramerateOk) Settings.Framerate = fps;
-				isOk &= isStrFramerateOk;
-
-				int size;
-				isStrSuperSizeOk = Int32.TryParse(strSuperSize, out size);
-				if (isStrSuperSizeOk) Settings.SuperSize = size;
-				isOk &= isStrSuperSizeOk;
-
-				if (!Core.IsCaptureTimeMode)
-				{
-					float dtLimit;
-					isStrDeltaTimeOk = float.TryParse(strDeltaTime.Replace(',', '.'), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture.NumberFormat, out dtLimit);
-					if (isStrDeltaTimeOk)
-					{
-						Settings.DeltaTimeLimit = Math.Max(0.02f, dtLimit); // (ノಠ益ಠ)ノ彡┻━┻
-						strDeltaTime = Settings.DeltaTimeLimit.ToString();
-					}
-					isOk &= isStrDeltaTimeOk;
-				}
-
-				if (strDirectory != string.Empty)
-				{
-					isStrDirectoryOk = Directory.Exists(strDirectory);
-					if (isStrDirectoryOk) Settings.ShotsDirectory = strDirectory;
-					isOk &= isStrDirectoryOk;
-				} else {
-					isStrDirectoryOk = true;
-					Settings.ShotsDirectory = Settings.ShotsDirectoryDefault;
-				}
-
-				if (isOk) Settings.Save();
-
+				Settings.Framerate = Mathf.Max(1, fps);
+				strFramerate = Settings.Framerate.ToString();
 			}
+			isOk &= isStrFramerateOk;
+
+			int size;
+			isStrSuperSizeOk = Int32.TryParse(strSuperSize, out size);
+			if (isStrSuperSizeOk)
+			{
+				Settings.SuperSize = Mathf.Max(1, size);
+				strSuperSize = Settings.SuperSize.ToString();
+			}
+			isOk &= isStrSuperSizeOk;
+
+			if (!Core.IsCaptureTimeMode)
+			{
+				float dtLimit;
+				isStrDeltaTimeOk = float.TryParse(strDeltaTime.Replace(',', '.'), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture.NumberFormat, out dtLimit);
+				if (isStrDeltaTimeOk)
+				{
+					Settings.DeltaTimeLimit = Math.Max(0.02f, dtLimit); // (ノಠ益ಠ)ノ彡┻━┻
+					strDeltaTime = Settings.DeltaTimeLimit.ToString();
+				}
+				isOk &= isStrDeltaTimeOk;
+			}
+
+			if (strDirectory != string.Empty)
+			{
+				isStrDirectoryOk = Directory.Exists(strDirectory);
+				if (isStrDirectoryOk) Settings.ShotsDirectory = strDirectory;
+				isOk &= isStrDirectoryOk;
+			} else {
+				isStrDirectoryOk = true;
+				Settings.ShotsDirectory = Settings.ShotsDirectoryDefault;
+			}
+
+			if (isOk) Settings.Save();
 		}
 
 		static void ColorizeFieldIsWrong(GUIStyle style, bool isOk)
@@ -246,7 +252,7 @@ namespace StartMovie
 			strFramerate = Settings.Framerate.ToString();
 			strSuperSize = Settings.SuperSize.ToString();
 			strDeltaTime = Settings.DeltaTimeLimit.ToString();
-			strDirectory = Settings.ShotsDirectoryToOutput();
+			strDirectory = Settings.DirectoryToOutput(Settings.ShotsDirectory, Settings.ShotsDirectoryDefault);
 			isStrFramerateOk = isStrSuperSizeOk = isStrDeltaTimeOk = isStrDirectoryOk = true;
 		}
 
@@ -273,7 +279,7 @@ namespace StartMovie
 			if (!IsButtonAdded && ApplicationLauncher.Instance != null)
 			{
 				var resources = new System.Resources.ResourceManager("StartMovie.Resources", typeof(StartMovieToolbarButton).Assembly);
-				Byte[] bytes = resources.GetObject("ToolbarIcon") as Byte[];
+				Byte[] bytes = resources.GetObject("StartMovieToolbarIcon") as Byte[];
 				Texture2D buttonTexture = new Texture2D(38, 38, TextureFormat.ARGB32, false);
 				buttonTexture.LoadRawTextureData(bytes);
 				buttonTexture.Apply();

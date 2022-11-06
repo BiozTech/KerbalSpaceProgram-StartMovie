@@ -8,11 +8,7 @@ namespace StartMovie
 	public static class Core
 	{
 
-		public static bool IsRecording = false;
-		public static bool IsGUIVisible = false;
-		public static bool IsEnabled = false;
-		public static bool IsCaptureTimeMode = true;
-		public static bool IsReadingKeys = false;
+		public static bool IsRecording = false, IsEnabled = false, IsGUIVisible = false, IsCaptureTimeMode = true, IsReadingKeys = false;
 
 		public static void Log(object message)
 		{
@@ -25,20 +21,12 @@ namespace StartMovie
 	{
 
 		public static KeyCode KeyRecord = KeyCode.F6;
-		public static int Framerate = 60;
-		public static int SuperSize = GameSettings.SCREENSHOT_SUPERSIZE;
+		public static int Framerate = 60, SuperSize = GameSettings.SCREENSHOT_SUPERSIZE;
 		public static float DeltaTimeLimit = GameSettings.PHYSICS_FRAME_DT_LIMIT; // 0.02 ~ 0.35 -> inf
-		public static string ShotsDirectoryDefault = Path.Combine(KSPUtil.ApplicationRootPath, "Screenshots");
-		public static string ShotsDirectory = ShotsDirectoryDefault;
+		public static string ShotsDirectoryDefault = Path.Combine(KSPUtil.ApplicationRootPath, "Screenshots"), ShotsDirectory = ShotsDirectoryDefault;
 
-		static string pluginDataDir = Path.Combine(KSPUtil.ApplicationRootPath, "GameData/BiozTech/PluginData");
-		static string settingsFileName = Path.Combine(pluginDataDir, "StartMovieSettings.cfg");
-		static string configTagMain = "StartMovieSettings";
-		static string configTagKey = "Key";
-		static string configTagFramerate = "Framerate";
-		static string configTagSize = "SuperSize";
-		static string configTagDeltaTimeLimit = "DeltaTimeLimit";
-		static string configTagShotsDirectory = "ScreenshotsDirectory";
+		static string pluginDataDir = Path.Combine(KSPUtil.ApplicationRootPath, "GameData/BiozTech/PluginData"), settingsFileName = Path.Combine(pluginDataDir, "StartMovieSettings.cfg");
+		static string configTagMain = "StartMovieSettings", configTagKey = "Key", configTagFramerate = "Framerate", configTagSize = "SuperSize", configTagDeltaTimeLimit = "DeltaTimeLimit", configTagShotsDirectory = "ScreenshotsDirectory";
 
 		public static void Load()
 		{
@@ -59,8 +47,7 @@ namespace StartMovie
 			try
 			{
 
-				bool isOk = true;
-				bool isOkCurrent;
+				bool isOk = true, isOkCurrent;
 
 				isOkCurrent = configNode.HasValue(configTagKey);
 				if (isOkCurrent)
@@ -76,7 +63,11 @@ namespace StartMovie
 				{
 					int fps;
 					isOkCurrent = Int32.TryParse(configNode.GetValue(configTagFramerate), out fps);
-					if (isOkCurrent) Framerate = fps;
+					if (isOkCurrent)
+					{
+						isOkCurrent = 1 <= fps;
+						Framerate = isOkCurrent ? fps : 1;
+					}
 				}
 				isOk &= isOkCurrent;
 
@@ -85,7 +76,11 @@ namespace StartMovie
 				{
 					int size;
 					isOkCurrent = Int32.TryParse(configNode.GetValue(configTagSize), out size);
-					if (isOkCurrent) SuperSize = size;
+					if (isOkCurrent)
+					{
+						isOkCurrent = 1 <= size;
+						SuperSize = isOkCurrent ? size : 1;
+					}
 				}
 				isOk &= isOkCurrent;
 
@@ -94,7 +89,11 @@ namespace StartMovie
 				{
 					float dtLimit;
 					isOkCurrent = float.TryParse(configNode.GetValue(configTagDeltaTimeLimit).Replace(',', '.'), System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture.NumberFormat, out dtLimit);
-					if (isOkCurrent) DeltaTimeLimit = dtLimit;
+					if (isOkCurrent)
+					{
+						isOkCurrent = 0.02f <= dtLimit;
+						DeltaTimeLimit = isOkCurrent ? dtLimit : 0.02f;
+					}
 				}
 				isOk &= isOkCurrent;
 
@@ -133,7 +132,7 @@ namespace StartMovie
 			configNode.AddValue(configTagFramerate, Framerate, "Target framerate");
 			configNode.AddValue(configTagSize, SuperSize, "SCREENSHOT_SUPERSIZE");
 			configNode.AddValue(configTagDeltaTimeLimit, DeltaTimeLimit, "Affects on physics accuracy");
-			configNode.AddValue(configTagShotsDirectory, ShotsDirectoryToOutput(), "Folder the shots will be saved to");
+			configNode.AddValue(configTagShotsDirectory, DirectoryToOutput(ShotsDirectory, ShotsDirectoryDefault), "Folder the shots will be saved to");
 			if (!Directory.Exists(pluginDataDir)) Directory.CreateDirectory(pluginDataDir);
 			File.WriteAllText(settingsFileName, configNode.ToString(), System.Text.Encoding.Unicode); // non-latin letters? nah, never heard
 		}
@@ -145,9 +144,9 @@ namespace StartMovie
 			Save();
 		}
 
-		public static string ShotsDirectoryToOutput()
+		public static string DirectoryToOutput(string directory, string directoryDefault)
 		{
-			return (ComparePaths(ShotsDirectory, ShotsDirectoryDefault) != 0) ? ShotsDirectory : string.Empty;
+			return (ComparePaths(directory, directoryDefault) != 0) ? directory : string.Empty;
 		}
 		public static int ComparePaths(string path1, string path2)
 		{

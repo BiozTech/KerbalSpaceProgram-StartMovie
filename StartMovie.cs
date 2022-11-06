@@ -12,7 +12,7 @@ namespace StartMovie
 		static int counter;
 		static string activeDirectory = Settings.ShotsDirectory;
 
-		void LateUpdate()
+		void Update()
 		{
 			if (Input.GetKeyDown(Settings.KeyRecord))
 			{
